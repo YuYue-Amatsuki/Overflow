@@ -6,6 +6,7 @@ import cn.evolvefield.onebot.client.handler.ActionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
@@ -23,9 +24,10 @@ import java.net.URI
  */
 class ConnectFactory private constructor(
     private val config: BotConfig,
+    parent: Job?,
     private val logger: Logger,
 ) {
-    private val actionHandler: ActionHandler = ActionHandler(logger)
+    private val actionHandler: ActionHandler = ActionHandler(parent, logger)
 
     /**
      * 创建websocket客户端(支持cqhttp和mirai类型)
@@ -80,16 +82,20 @@ class ConnectFactory private constructor(
             val address = InetSocketAddress(config.reversedPort)
             pair = WSServer.createAndWaitConnect(scope, config, address, logger, actionHandler, config.token)
         } catch (e: Exception) {
-            logger.error("▌ 反向 WebSocket 绑定端口 {} 或连接客户端时出现错误 ┈━═☆", config.reversedPort)
-            logger.error(e.stackTraceToString())
+            if (e is CancellationException) {
+                logger.info("▌ 反向 WebSocket 服务端被用户主动关闭")
+            } else {
+                logger.error("▌ 反向 WebSocket 绑定端口 {} 或连接客户端时出现错误 ┈━═☆", config.reversedPort)
+                logger.error(e.stackTraceToString())
+            }
         }
         return pair
     }
 
     companion object {
         @JvmStatic
-        fun create(config: BotConfig, logger: Logger = LoggerFactory.getLogger("Onebot")): ConnectFactory {
-            return ConnectFactory(config, logger)
+        fun create(config: BotConfig, parent: Job? = null, logger: Logger = LoggerFactory.getLogger("Onebot")): ConnectFactory {
+            return ConnectFactory(config, parent, logger)
         }
     }
 }
