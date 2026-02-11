@@ -118,17 +118,21 @@ internal fun addGroupListeners() {
         val operator = group.queryMember(e.operatorId)
         val target = group.queryMember(e.userId)
             ?: throw IllegalStateException("无法找到群 ${e.groupId} 的成员 ${e.userId}")
-        bot.eventDispatcher.broadcastAsync(
-            MessageRecallEvent.GroupRecall(
-                bot,
-                target.id,
-                intArrayOf(e.msgId.toInt()),
-                intArrayOf(e.msgId.toInt()),
-                e.timeInSecond().toInt(),
-                operator, group,
-                target
-            )
-        )
+
+        // 通过 Onebot 接口，使用消息ID获取消息发送时间
+        // 如果获取不到，则使用事件接收时间作为缺省值
+        val msg = bot.impl.getMsg(e.msgId) { throwExceptions(null) }.data
+        val messageTime = msg?.time ?: e.timeInSecond().toInt()
+
+        bot.eventDispatcher.broadcastAsync(MessageRecallEvent.GroupRecall(
+            bot,
+            target.id,
+            intArrayOf(e.msgId),
+            intArrayOf(e.msgId),
+            messageTime,
+            operator, group,
+            target
+        ))
     }
     listen<GroupAddRequestEvent>("add") { e ->
         if (bot.checkId(e.groupId, "%onebot 返回了异常的数值 group_id=%value")) return@listen

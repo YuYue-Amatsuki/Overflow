@@ -9,5 +9,5 @@ class GroupMsgDeleteNoticeEvent : NoticeEvent() {
     @SerializedName("operator_id")
     var operatorId = 0L
     @SerializedName("message_id")
-    var msgId = 0L
+    var msgId = 0
 }

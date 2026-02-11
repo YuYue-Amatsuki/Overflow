@@ -94,11 +94,17 @@ internal fun addFriendListeners() {
             logger.warning("无法找到好友 ${e.userId}")
             return@listen
         }
+
+        // 通过 Onebot 接口，使用消息ID获取消息发送时间
+        // 如果获取不到，则使用事件接收时间作为缺省值
+        val msg = bot.impl.getMsg(e.msgId) { throwExceptions(null) }.data
+        val messageTime = msg?.time ?: e.timeInSecond().toInt()
+
         eventDispatcher.broadcastAsync(MessageRecallEvent.FriendRecall(
             bot,
-            intArrayOf(e.msgId.toInt()),
-            intArrayOf(e.msgId.toInt()),
-            e.timeInSecond().toInt(),
+            intArrayOf(e.msgId),
+            intArrayOf(e.msgId),
+            messageTime,
             operatorId,
             friend
         ))
