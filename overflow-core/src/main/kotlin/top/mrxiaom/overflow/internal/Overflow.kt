@@ -189,6 +189,7 @@ class Overflow : IMirai, CoroutineScope, LowLevelApiAccessor, OverflowAPI {
             miraiConsoleFlag = true
             injectMiraiConsole()
         } catch (ignored: ClassNotFoundException) {
+        } catch (ignored: UninitializedPropertyAccessException) {
         }
         OnebotMessages.registerSerializers()
     }
